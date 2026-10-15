@@ -1,0 +1,2213 @@
+For **Part B**, you need a C program where:
+
+- The user enters a command: `ls`, `cal`, `uname`, or `date`
+- The **child process** executes the command using `exec()`
+- The **parent process** waits using `wait()`
+- The program prints the **process ID (PID)** for each command
+
+### C Program
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main() {
+    char command[20];
+    pid_t pid;
+
+    printf("Enter command (ls/cal/uname/date): ");
+    scanf("%s", command);
+
+    pid = fork();
+
+    if (pid < 0) {
+        printf("Fork failed\n");
+        return 1;
+    }
+
+    if (pid == 0) {
+        // Child process
+        printf("Child Process ID: %d\n", getpid());
+
+        if (strcmp(command, "ls") == 0)
+            execlp("ls", "ls", NULL);
+
+        else if (strcmp(command, "cal") == 0)
+            execlp("cal", "cal", NULL);
+
+        else if (strcmp(command, "uname") == 0)
+            execlp("uname", "uname", NULL);
+
+        else if (strcmp(command, "date") == 0)
+            execlp("date", "date", NULL);
+
+        else
+            printf("Invalid command\n");
+
+        exit(1);
+    }
+
+    else {
+        // Parent process
+        wait(NULL);
+        printf("Parent Process ID: %d\n", getpid());
+        printf("Child Process ID: %d completed\n", pid);
+    }
+
+    return 0;
+}
+```
+
+**Important:** Add this header because `strcmp()` is used:
+
+```c
+#include <string.h>
+```
+
+So the complete header section is:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <string.h>
+```
+
+### Compile and run
+
+Save as `process.c`:
+
+```bash
+gcc process.c -o process
+```
+
+Run:
+
+```bash
+./process
+```
+
+### Example 1: `ls`
+
+```text
+Enter command (ls/cal/uname/date): ls
+Child Process ID: 12345
+file1.txt
+file2.txt
+process.c
+Parent Process ID: 12344
+Child Process ID: 12345 completed
+```
+
+### Example 2: `uname`
+
+```text
+Enter command (ls/cal/uname/date): uname
+Child Process ID: 12350
+Linux
+Parent Process ID: 12344
+Child Process ID: 12350 completed
+```
+
+### How it works
+
+```text
+             Parent Process
+                  |
+                fork()
+               /      \
+              /        \
+       Child Process   Parent Process
+            |                |
+         exec()            wait()
+            |                |
+      ls/cal/uname/date      |
+            |                |
+            └──────→ completes
+```
+
+**Key functions to remember for the exam:**
+
+- `fork()` → creates a child process
+- `getpid()` → gets process ID
+- `execlp()` → replaces child process with the requested command
+- `wait()` → parent waits for child to finish
+- `exit()` → terminates the process
+
+
+Yes. Based on the **Part A questions you received** and the **Part B `fork() + exec() + wait()` question**, your midmodel is likely testing **basic Linux commands, file handling, filters, process commands, and basic shell operations**.
+
+Here is a **midmodel-focused Linux command list**. I would prioritize these rather than trying to memorize hundreds of commands.
+
+## 1. Basic file and directory commands
+
+| Task | Command | Example |
+|---|---|---|
+| List files | `ls` | `ls` |
+| List all files | `ls -a` | `ls -a` |
+| Long listing | `ls -l` | `ls -l` |
+| Long + hidden | `ls -la` | `ls -la` |
+| Show current directory | `pwd` | `pwd` |
+| Create directory | `mkdir` | `mkdir test` |
+| Remove empty directory | `rmdir` | `rmdir test` |
+| Change directory | `cd` | `cd test` |
+| Go one level back | `cd ..` | `cd ..` |
+| Go home | `cd ~` | `cd ~` |
+| Create empty file | `touch` | `touch file.txt` |
+| Remove file | `rm` | `rm file.txt` |
+| Remove directory | `rm -r` | `rm -r test` |
+
+---
+
+# 2. Creating and displaying files ⭐⭐⭐
+
+These are **very likely** based on your Part A questions.
+
+### Create a file
+
+```bash
+touch file.txt
+```
+
+### Write into a file
+
+```bash
+echo "Hello Linux" > file.txt
+```
+
+### Add content without deleting existing content
+
+```bash
+echo "Second line" >> file.txt
+```
+
+### Display entire file
+
+```bash
+cat file.txt
+```
+
+### Display with line numbers
+
+```bash
+cat -n file.txt
+```
+
+### Copy a file
+
+```bash
+cp file.txt newfile.txt
+```
+
+### Move / rename a file
+
+```bash
+mv file.txt newfile.txt
+```
+
+### Display first 10 lines
+
+```bash
+head file.txt
+```
+
+or
+
+```bash
+head -n 10 file.txt
+```
+
+### Display last 10 lines
+
+```bash
+tail file.txt
+```
+
+or
+
+```bash
+tail -n 10 file.txt
+```
+
+---
+
+# 3. File content manipulation ⭐⭐⭐
+
+These are particularly important because your question already contains **sorting and unique lines**.
+
+### Sort ascending
+
+```bash
+sort file.txt
+```
+
+### Sort numerically
+
+```bash
+sort -n file.txt
+```
+
+### Sort descending
+
+```bash
+sort -r file.txt
+```
+
+### Sort numerically descending
+
+```bash
+sort -nr file.txt
+```
+
+### Remove consecutive duplicate lines
+
+```bash
+uniq file.txt
+```
+
+Usually, to get **unique lines correctly**, use:
+
+```bash
+sort file.txt | uniq
+```
+
+### Count occurrences of each line
+
+```bash
+sort file.txt | uniq -c
+```
+
+Example:
+
+```text
+2 Apple
+3 Banana
+1 Orange
+```
+
+### Display sorted unique values
+
+```bash
+sort file.txt | uniq
+```
+
+---
+
+# 4. `wc` command ⭐⭐⭐
+
+Very commonly asked in Linux practical exams.
+
+### Count lines
+
+```bash
+wc -l file.txt
+```
+
+### Count words
+
+```bash
+wc -w file.txt
+```
+
+### Count characters
+
+```bash
+wc -c file.txt
+```
+
+### Count everything
+
+```bash
+wc file.txt
+```
+
+Example:
+
+```text
+5 12 70 file.txt
+```
+
+Meaning:
+
+```text
+5   → lines
+12  → words
+70  → bytes
+```
+
+---
+
+# 5. `grep` command ⭐⭐⭐
+
+Used to **search for text inside files**.
+
+### Search for a word
+
+```bash
+grep "hello" file.txt
+```
+
+### Case-insensitive search
+
+```bash
+grep -i "hello" file.txt
+```
+
+### Show line numbers
+
+```bash
+grep -n "hello" file.txt
+```
+
+### Count matching lines
+
+```bash
+grep -c "hello" file.txt
+```
+
+### Search multiple files
+
+```bash
+grep "hello" file1.txt file2.txt
+```
+
+### Example
+
+Suppose:
+
+```text
+Apple
+Banana
+Apple
+Mango
+```
+
+Command:
+
+```bash
+grep "Apple" fruits.txt
+```
+
+Output:
+
+```text
+Apple
+Apple
+```
+
+---
+
+# 6. `cut` command
+
+Used to extract columns/fields.
+
+Suppose `students.txt` contains:
+
+```text
+101,John,20
+102,David,21
+103,Alex,19
+```
+
+Get the first column:
+
+```bash
+cut -d ',' -f 1 students.txt
+```
+
+Output:
+
+```text
+101
+102
+103
+```
+
+Get the second column:
+
+```bash
+cut -d ',' -f 2 students.txt
+```
+
+---
+
+# 7. `tr` command
+
+Used to **translate or replace characters**.
+
+### Convert lowercase to uppercase
+
+```bash
+echo "hello" | tr 'a-z' 'A-Z'
+```
+
+Output:
+
+```text
+HELLO
+```
+
+### Convert uppercase to lowercase
+
+```bash
+echo "HELLO" | tr 'A-Z' 'a-z'
+```
+
+### Replace characters
+
+```bash
+echo "hello world" | tr ' ' '_'
+```
+
+Output:
+
+```text
+hello_world
+```
+
+---
+
+# 8. `tee` command
+
+Displays output and also writes it into a file.
+
+```bash
+echo "Hello" | tee file.txt
+```
+
+---
+
+# 9. Pipes `|` ⭐⭐⭐
+
+This is **very important**.
+
+A pipe sends the output of one command to another command.
+
+### Example
+
+```bash
+ls | wc -l
+```
+
+Meaning:
+
+```text
+ls
+ ↓
+list of files
+ ↓
+wc -l
+ ↓
+number of files
+```
+
+Another example:
+
+```bash
+cat file.txt | sort
+```
+
+Another:
+
+```bash
+cat file.txt | sort | uniq
+```
+
+---
+
+# 10. Redirection ⭐⭐⭐
+
+### `>` — overwrite
+
+```bash
+echo "Hello" > file.txt
+```
+
+If the file already contains something, it is replaced.
+
+### `>>` — append
+
+```bash
+echo "World" >> file.txt
+```
+
+Adds content at the end.
+
+### `<` — input redirection
+
+```bash
+sort < file.txt
+```
+
+### Example combining commands
+
+```bash
+sort numbers.txt > sorted.txt
+```
+
+This is exactly the type of command that can appear in your practical.
+
+---
+
+# 11. `find` command ⭐⭐
+
+Used to search for files.
+
+### Find a file
+
+```bash
+find . -name "file.txt"
+```
+
+### Find all `.txt` files
+
+```bash
+find . -name "*.txt"
+```
+
+### Find directories
+
+```bash
+find . -type d
+```
+
+### Find files
+
+```bash
+find . -type f
+```
+
+---
+
+# 12. `which` and `whereis` ⭐⭐⭐
+
+Your question specifically asks:
+
+> Display the path for the command `ls`
+
+Answer:
+
+```bash
+which ls
+```
+
+Example:
+
+```text
+/usr/bin/ls
+```
+
+Also:
+
+```bash
+whereis ls
+```
+
+---
+
+# 13. System information commands ⭐⭐
+
+These are easy questions they can ask.
+
+### Display operating system/kernel information
+
+```bash
+uname
+```
+
+### Detailed information
+
+```bash
+uname -a
+```
+
+### Display date
+
+```bash
+date
+```
+
+### Display calendar
+
+```bash
+cal
+```
+
+### Current logged-in user
+
+```bash
+whoami
+```
+
+### Logged-in users
+
+```bash
+who
+```
+
+### Hostname
+
+```bash
+hostname
+```
+
+---
+
+# 14. Process commands ⭐⭐⭐
+
+Since your Part B involves processes, **learn these carefully**.
+
+### Display running processes
+
+```bash
+ps
+```
+
+### Detailed process information
+
+```bash
+ps -f
+```
+
+### Display all processes
+
+```bash
+ps -e
+```
+
+or:
+
+```bash
+ps aux
+```
+
+### Continuously monitor processes
+
+```bash
+top
+```
+
+### Find process ID
+
+```bash
+pgrep process_name
+```
+
+### Kill a process
+
+```bash
+kill PID
+```
+
+Example:
+
+```bash
+kill 1234
+```
+
+---
+
+# 15. Process-related C functions ⭐⭐⭐⭐⭐
+
+This is especially important because your **Part B question is clearly from Operating Systems/Linux process concepts**.
+
+Remember:
+
+```c
+fork();
+```
+
+Creates a child process.
+
+```c
+getpid();
+```
+
+Returns the current process ID.
+
+```c
+getppid();
+```
+
+Returns the parent process ID.
+
+```c
+wait(NULL);
+```
+
+Parent waits for child.
+
+```c
+execlp();
+```
+
+Executes another program.
+
+Other `exec` variants you should recognize:
+
+```c
+execl()
+execv()
+execlp()
+execvp()
+```
+
+---
+
+# 16. File permissions ⭐⭐⭐
+
+This can very easily become a practical question.
+
+### Display permissions
+
+```bash
+ls -l
+```
+
+Example:
+
+```text
+-rwxr-xr--
+```
+
+### Change permission
+
+```bash
+chmod 755 file.sh
+```
+
+### Give execute permission
+
+```bash
+chmod +x file.sh
+```
+
+### Remove write permission
+
+```bash
+chmod -w file.txt
+```
+
+---
+
+# 17. `man` command
+
+Used to get the manual/help for a command.
+
+```bash
+man ls
+```
+
+```bash
+man grep
+```
+
+```bash
+man chmod
+```
+
+You can also use:
+
+```bash
+ls --help
+```
+
+---
+
+# 18. Very likely practical combinations ⭐⭐⭐⭐⭐
+
+Your professor may not ask:
+
+> "What is `sort`?"
+
+Instead, they may give a **task** requiring multiple commands.
+
+### Example 1
+
+> Create a file and display its contents.
+
+```bash
+touch file.txt
+echo "Hello Linux" > file.txt
+cat file.txt
+```
+
+### Example 2
+
+> Copy a file and display the copied file.
+
+```bash
+cp file.txt new.txt
+cat new.txt
+```
+
+### Example 3
+
+> Display first 10 lines.
+
+```bash
+head -n 10 file.txt
+```
+
+### Example 4
+
+> Sort numbers in ascending order.
+
+```bash
+sort -n numbers.txt
+```
+
+### Example 5
+
+> Sort numbers in descending order.
+
+```bash
+sort -nr numbers.txt
+```
+
+### Example 6
+
+> Display unique lines.
+
+```bash
+sort file.txt | uniq
+```
+
+### Example 7
+
+> Count number of lines.
+
+```bash
+wc -l file.txt
+```
+
+### Example 8
+
+> Search for a particular word.
+
+```bash
+grep "Linux" file.txt
+```
+
+### Example 9
+
+> Count how many times a word occurs.
+
+```bash
+grep -c "Linux" file.txt
+```
+
+### Example 10
+
+> Find the path of `ls`.
+
+```bash
+which ls
+```
+
+---
+
+# 🔥 What I would prioritize for your midmodel
+
+Based specifically on the questions you showed me, learn these **in this order**:
+
+### Tier 1 — Must know
+
+```text
+ls
+pwd
+cd
+mkdir
+rmdir
+touch
+cat
+cp
+mv
+rm
+head
+tail
+sort
+uniq
+which
+```
+
+### Tier 2 — Very important
+
+```text
+grep
+wc
+cut
+find
+ps
+uname
+date
+cal
+whoami
+chmod
+```
+
+### Tier 3 — Linux concepts
+
+```text
+>
+>>
+|
+<
+```
+
+Understand **redirection and pipes**, not just their syntax.
+
+### Tier 4 — Process practical
+
+```c
+fork()
+exec()
+execlp()
+wait()
+getpid()
+getppid()
+```
+
+---
+
+## 20 commands you should be able to write without looking
+
+```bash
+ls
+ls -la
+pwd
+cd ..
+mkdir test
+rmdir test
+touch file.txt
+cat file.txt
+cat -n file.txt
+cp file.txt new.txt
+mv file.txt new.txt
+rm file.txt
+head -n 10 file.txt
+tail -n 10 file.txt
+sort file.txt
+sort -nr file.txt
+sort file.txt | uniq
+wc -l file.txt
+grep "word" file.txt
+which ls
+```
+
+If your midmodel is **Linux/OS practical**, I would especially practice **questions written as real-world tasks** rather than memorizing definitions—for example, *“create a file, insert 10 numbers, sort them, remove duplicates, count the lines, and save the result to another file.”* That format combines several commands and is very similar to the Part A questions you were given.
+
+Absolutely. Since your actual midmodel questions are **task-based Linux practical questions**, you should practice in the same format rather than just memorizing commands.
+
+Below is a **mock question bank**, arranged from basic → moderate → exam-level. Try solving them yourself first; I can then check your commands.
+
+# Linux Midmodel Practice Questions
+
+## Part A — Basic Linux Commands
+
+### Set 1 — Basic File Operations
+
+**1.** Write Linux commands to:
+- Display the current working directory.
+- Display all files including hidden files.
+- Create a directory named `OSLab`.
+- Enter the `OSLab` directory.
+- Create a file named `student.txt`.
+- Display the contents of the file.
+
+---
+
+**2.** Create a file named `default.txt` and write the following contents into it:
+
+```text
+Operating System
+Linux
+Process Management
+File Management
+```
+
+Copy the file to `backup.txt` and display the contents of `backup.txt`.
+
+---
+
+**3.** Create a file named `numbers.txt` containing the numbers:
+
+```text
+10
+20
+30
+40
+50
+60
+70
+80
+90
+100
+```
+
+Display:
+1. The first 5 lines.
+2. The last 5 lines.
+3. The total number of lines.
+
+---
+
+**4.** Create a file named `data.txt`, write some text into it, rename it as `information.txt`, and display its contents.
+
+---
+
+**5.** Create a directory named `test`, create three files inside it:
+
+```text
+one.txt
+two.txt
+three.txt
+```
+
+Display all the files inside the directory and then remove the directory and its files.
+
+---
+
+# Set 2 — Sorting and Unique Data ⭐
+
+**6.** Create a file named `numbers.txt` containing numbers in descending order:
+
+```text
+90
+70
+50
+80
+20
+40
+10
+60
+30
+```
+
+Copy it to `sorted.txt` and display the numbers in **ascending order**.
+
+---
+
+**7.** Create a file `marks.txt` containing:
+
+```text
+85
+90
+75
+95
+60
+85
+90
+70
+```
+
+Perform the following:
+1. Sort the marks in ascending order.
+2. Sort the marks in descending order.
+3. Display only unique marks.
+4. Count the number of lines.
+
+---
+
+**8.** Create a file `names.txt` containing:
+
+```text
+Arun
+Bala
+Arun
+David
+Bala
+Charles
+Arun
+David
+```
+
+Display:
+1. All names sorted alphabetically.
+2. Unique names.
+3. The number of occurrences of each name.
+
+---
+
+**9.** Create a file containing duplicate numbers. Sort the numbers and remove duplicate values. Store the final result in `unique.txt` and display it.
+
+---
+
+**10.** Create `students.txt` containing student names in random order with duplicate names. Sort the names alphabetically and display only the unique names in column format.
+
+---
+
+# Set 3 — `head`, `tail`, `grep`, `wc` ⭐⭐⭐
+
+**11.** Create a file `linux.txt` containing at least 15 lines about Linux. Display:
+- First 5 lines.
+- First 10 lines.
+- Last 5 lines.
+- Last 10 lines.
+
+---
+
+**12.** Create a file containing the following:
+
+```text
+Linux is an operating system
+Linux supports multitasking
+Linux supports multiple users
+Windows is an operating system
+Linux is open source
+Unix is an operating system
+Linux is widely used
+```
+
+Use `grep` to display only the lines containing the word:
+
+```text
+Linux
+```
+
+---
+
+**13.** Create a file containing several sentences. Use commands to find:
+- Number of lines.
+- Number of words.
+- Number of characters.
+
+---
+
+**14.** Create a file `students.txt` containing names and marks. Search and display all lines containing the name `Arun`.
+
+---
+
+**15.** Create a file containing repeated occurrences of the word `Linux`. Use a command to count how many lines contain the word `Linux`.
+
+---
+
+# Set 4 — Pipes and Redirection ⭐⭐⭐⭐
+
+**16.** Create a file `numbers.txt` containing 10 numbers. Sort the numbers and save the sorted result into `sorted.txt`.
+
+Display the contents of `sorted.txt`.
+
+---
+
+**17.** Create a file containing duplicate names. Use a **pipe** to sort the names and remove duplicates.
+
+Expected structure:
+
+```text
+cat → sort → uniq
+```
+
+Write the complete Linux command.
+
+---
+
+**18.** Use a Linux command to count the number of files in the current directory using a pipe.
+
+**Hint:** Think about:
+
+```text
+ls → wc
+```
+
+---
+
+**19.** Create a file using `echo` and then append another line to the same file without deleting the existing content.
+
+---
+
+**20.** Create `data.txt` containing numbers. Sort the numbers in descending order and redirect the output into `descending.txt`.
+
+---
+
+# Set 5 — `cut` and Column Operations
+
+**21.** Create a file `students.txt` containing:
+
+```text
+101,Arun,85
+102,Bala,90
+103,David,78
+104,Charles,92
+```
+
+Use Linux commands to display **only the student names**.
+
+---
+
+**22.** Using the same file, display only the marks.
+
+Expected output:
+
+```text
+85
+90
+78
+92
+```
+
+---
+
+**23.** Display only the student IDs from `students.txt`.
+
+---
+
+**24.** Create a comma-separated file containing employee information:
+
+```text
+E101,Arun,Developer
+E102,Bala,Tester
+E103,David,Manager
+```
+
+Display only the employee names using a Linux command.
+
+---
+
+# Set 6 — Finding Files and Commands
+
+**25.** Write a command to find all `.txt` files in the current directory and its subdirectories.
+
+---
+
+**26.** Write a command to find the file `student.txt` in the current directory and subdirectories.
+
+---
+
+**27.** Display the location/path of the following commands:
+
+```text
+ls
+cat
+grep
+pwd
+```
+
+---
+
+**28.** Display detailed information about the `ls` command using the Linux manual.
+
+---
+
+# Set 7 — System Information
+
+**29.** Write commands to display:
+
+1. Current date and time.
+2. Current calendar.
+3. Current username.
+4. Operating system/kernel information.
+5. Hostname.
+6. Current working directory.
+
+---
+
+**30.** Display detailed information about the Linux kernel and system architecture.
+
+---
+
+# Set 8 — Permissions ⭐⭐⭐
+
+**31.** Create a file named `script.sh`. Give it execute permission and display its permissions.
+
+---
+
+**32.** Create a file `data.txt` and change its permission to:
+
+```text
+rwxr-xr-x
+```
+
+Use the numerical form of `chmod`.
+
+---
+
+**33.** Create a file and give the owner read/write/execute permission while giving the group and others only read permission.
+
+---
+
+**34.** Display the permissions of all files in the current directory.
+
+---
+
+# Set 9 — Process Commands ⭐⭐⭐⭐⭐
+
+These are particularly important because your Part B already involves processes.
+
+**35.** Write a Linux command to display all currently running processes.
+
+---
+
+**36.** Display detailed information about the processes running in the system.
+
+---
+
+**37.** Write a command to continuously monitor running processes.
+
+---
+
+**38.** Find the process ID of a running process.
+
+---
+
+**39.** Write a command to terminate a process using its PID.
+
+---
+
+**40.** Display your current process ID using a Linux command.
+
+---
+
+# Part B — C Programs with Linux System Calls ⭐⭐⭐⭐⭐
+
+These are closer to the question you showed me.
+
+## Question 41 — `fork()`
+
+Write a C program that creates a child process using `fork()` and displays:
+
+```text
+Parent Process ID
+Child Process ID
+```
+
+---
+
+## Question 42 — Parent waits for child
+
+Write a C program using:
+
+```c
+fork()
+wait()
+```
+
+The child should print:
+
+```text
+Child Process
+```
+
+and the parent should print:
+
+```text
+Parent Process
+```
+
+The parent must wait until the child completes.
+
+---
+
+## Question 43 — Execute `ls`
+
+Write a C program that creates a child process using `fork()`.
+
+The child should execute:
+
+```bash
+ls
+```
+
+using an `exec()` family function.
+
+The parent should wait for the child using `wait()`.
+
+---
+
+## Question 44 — Execute commands based on user input ⭐⭐⭐⭐⭐
+
+Write a C program that accepts one of the following commands from the user:
+
+```text
+ls
+cal
+uname
+date
+```
+
+The child process should execute the selected command using `exec()`.
+
+The parent process should wait using `wait()`.
+
+Display the PID of the child process.
+
+This is **almost exactly the style of the question you received**, so practice it until you can write it without referring to notes.
+
+---
+
+## Question 45 — Multiple commands
+
+Write a C program that asks the user to enter:
+
+```text
+1 → ls
+2 → date
+3 → cal
+4 → uname
+```
+
+Create a child process using `fork()` and execute the corresponding command using `execlp()`.
+
+The parent should use `wait()`.
+
+---
+
+## Question 46 — Parent and child PID
+
+Write a C program using `fork()` where:
+
+- Parent prints its PID and child's PID.
+- Child prints its PID and parent's PID.
+- Parent waits for the child.
+
+Functions to use:
+
+```c
+fork()
+getpid()
+getppid()
+wait()
+```
+
+---
+
+## Question 47 — Execute different commands
+
+Write a C program that asks the user to enter a command:
+
+```text
+ls
+date
+uname
+```
+
+Use:
+
+```c
+fork()
+```
+
+to create a child and use:
+
+```c
+execlp()
+```
+
+to execute the command.
+
+If the user enters an invalid command, display:
+
+```text
+Invalid Command
+```
+
+---
+
+# 🔥 Most Important 10 Questions to Practice
+
+If you have **limited time before the midmodel**, solve these first:
+
+### 1.
+Create a file, write content, copy it to another file and display the copied file.
+
+### 2.
+Create a file containing numbers and display the first 10 lines.
+
+### 3.
+Create numbers in descending order, sort them in ascending order and save them to another file.
+
+### 4.
+Create a file with duplicate lines and display only unique lines.
+
+### 5.
+Create a file containing names and display them in alphabetical order without duplicates.
+
+### 6.
+Use `grep` to find specific lines from a file.
+
+### 7.
+Use `wc` to find lines, words and characters.
+
+### 8.
+Use a combination of:
+
+```bash
+cat | sort | uniq | wc
+```
+
+to process a file.
+
+### 9.
+Write a C program using:
+
+```c
+fork()
+exec()
+wait()
+```
+
+to execute `ls`, `cal`, `uname`, and `date`.
+
+### 10.
+Write a C program using:
+
+```c
+fork()
+getpid()
+getppid()
+wait()
+```
+
+to demonstrate parent-child processes.
+
+---
+
+## 🎯 One full mock midmodel
+
+Try this **without looking at the commands**:
+
+### Part A — 20 Marks
+
+**1.** Create `students.txt` containing 10 student names, including some duplicate names. Display the names in alphabetical order and remove duplicates.
+
+**2.** Create `numbers.txt` containing 15 numbers in random order. Sort them in descending order and save the result to `descending.txt`. Display the first 5 lines of the resulting file.
+
+**3.** Create `linux.txt` containing at least 15 lines. Display:
+- first 10 lines
+- last 5 lines
+- total number of lines
+- total number of words
+
+**4.** Create a comma-separated file:
+
+```text
+101,Arun,85
+102,Bala,90
+103,David,78
+104,Charles,92
+```
+
+Display only the names using `cut`.
+
+**5.** Display the path of the commands:
+
+```text
+ls
+cat
+grep
+```
+
+### Part B — 20 Marks
+
+**6.** Write a C program that creates a child process using `fork()`. The child should execute a command entered by the user from:
+
+```text
+ls
+cal
+uname
+date
+```
+
+using `exec()`. The parent should use `wait()` and display the child PID.
+
+**7.** Write a C program using `fork()`, `getpid()`, `getppid()` and `wait()` to display the parent and child process IDs.
+
+This mock is **very close to the difficulty and style of the questions you've shown**, so I would use it as your first timed practice paper.
+
+Your **Part B question** is:
+
+> **“Execute a program from user input: `ls`, `cal`, `uname`, `date` and print the process ID for each command using a C program. `exec()` for child process + `wait()` for parent process.”**
+
+Let's break it down from the basics.
+
+---
+
+# 1. What are they actually asking?
+
+You need to write **one C program** that does this:
+
+```text
+User enters a command
+        ↓
+    fork()
+        ↓
+ ┌──────────────┐
+ │              │
+Child          Parent
+ │              │
+exec()         wait()
+ │              │
+Runs command   waits for child
+ │
+prints PID
+```
+
+The four possible commands are:
+
+```text
+ls
+cal
+uname
+date
+```
+
+For example, if the user enters:
+
+```text
+ls
+```
+
+your program should create a child process, and the **child process executes `ls`**.
+
+---
+
+# 2. Why do we need `fork()`?
+
+`fork()` creates a new process.
+
+Before `fork()`:
+
+```text
+        Program
+          |
+       Parent
+```
+
+After `fork()`:
+
+```text
+        Program
+          |
+     ┌────┴────┐
+     ↓         ↓
+  Parent      Child
+```
+
+The parent and child are now separate processes.
+
+The important thing is:
+
+```c
+pid = fork();
+```
+
+After this:
+
+```c
+pid > 0
+```
+
+means you are in the **parent**.
+
+```c
+pid == 0
+```
+
+means you are in the **child**.
+
+```c
+pid < 0
+```
+
+means `fork()` failed.
+
+---
+
+# 3. Why does the child need `exec()`?
+
+The child created by `fork()` initially contains a copy of the same program.
+
+But we don't want the child to continue executing our C program.
+
+We want it to become:
+
+```text
+ls
+```
+
+or
+
+```text
+cal
+```
+
+or
+
+```text
+uname
+```
+
+or
+
+```text
+date
+```
+
+That's what `exec()` does.
+
+For example:
+
+```c
+execlp("ls", "ls", NULL);
+```
+
+This tells the child:
+
+> Replace the current child program with the `ls` program.
+
+Similarly:
+
+```c
+execlp("cal", "cal", NULL);
+```
+
+runs `cal`.
+
+```c
+execlp("uname", "uname", NULL);
+```
+
+runs `uname`.
+
+```c
+execlp("date", "date", NULL);
+```
+
+runs `date`.
+
+---
+
+# 4. Why does the parent need `wait()`?
+
+Suppose the child is executing:
+
+```bash
+ls
+```
+
+The parent shouldn't immediately finish.
+
+We want:
+
+```text
+Parent
+  |
+ wait()
+  |
+  |------ Child runs ls
+  |              |
+  |              ↓
+  |           finishes
+  ↓
+Parent continues
+```
+
+Therefore:
+
+```c
+wait(NULL);
+```
+
+makes the parent wait until the child finishes.
+
+---
+
+# 5. What does "print the process ID" mean?
+
+Every process has a unique **Process ID (PID)**.
+
+We can obtain the current process's PID using:
+
+```c
+getpid()
+```
+
+For example:
+
+```c
+printf("Child PID = %d\n", getpid());
+```
+
+If the child PID is `12345`, you'll see:
+
+```text
+Child PID = 12345
+```
+
+The parent can also print its PID:
+
+```c
+printf("Parent PID = %d\n", getpid());
+```
+
+---
+
+# 6. Complete program
+
+This is a good exam-ready version:
+
+```c
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/wait.h>
+#include <string.h>
+
+int main() {
+    char command[20];
+    pid_t pid;
+
+    printf("Enter command (ls/cal/uname/date): ");
+    scanf("%s", command);
+
+    pid = fork();
+
+    if (pid < 0) {
+        printf("Fork failed\n");
+        return 1;
+    }
+
+    if (pid == 0) {
+        // Child process
+
+        printf("Child PID: %d\n", getpid());
+
+        if (strcmp(command, "ls") == 0)
+            execlp("ls", "ls", NULL);
+
+        else if (strcmp(command, "cal") == 0)
+            execlp("cal", "cal", NULL);
+
+        else if (strcmp(command, "uname") == 0)
+            execlp("uname", "uname", NULL);
+
+        else if (strcmp(command, "date") == 0)
+            execlp("date", "date", NULL);
+
+        else
+            printf("Invalid command\n");
+
+        exit(1);
+    }
+
+    else {
+        // Parent process
+
+        wait(NULL);
+
+        printf("Parent PID: %d\n", getpid());
+        printf("Child process completed\n");
+    }
+
+    return 0;
+}
+```
+
+---
+
+# 7. Understand the program section by section
+
+### Header files
+
+```c
+#include <stdio.h>
+```
+
+Used for:
+
+```c
+printf()
+scanf()
+```
+
+---
+
+```c
+#include <stdlib.h>
+```
+
+Used for:
+
+```c
+exit()
+```
+
+---
+
+```c
+#include <unistd.h>
+```
+
+Important for:
+
+```c
+fork()
+getpid()
+execlp()
+```
+
+---
+
+```c
+#include <sys/wait.h>
+```
+
+Required for:
+
+```c
+wait()
+```
+
+---
+
+```c
+#include <string.h>
+```
+
+Required for:
+
+```c
+strcmp()
+```
+
+---
+
+# 8. Taking input
+
+```c
+char command[20];
+
+printf("Enter command (ls/cal/uname/date): ");
+scanf("%s", command);
+```
+
+Suppose the user enters:
+
+```text
+date
+```
+
+Then:
+
+```text
+command = "date"
+```
+
+---
+
+# 9. Creating the child
+
+```c
+pid = fork();
+```
+
+Now there are two processes.
+
+### Child:
+
+```c
+pid == 0
+```
+
+### Parent:
+
+```c
+pid > 0
+```
+
+---
+
+# 10. Child section
+
+```c
+if (pid == 0)
+```
+
+means:
+
+> This code is executed by the child.
+
+Then:
+
+```c
+printf("Child PID: %d\n", getpid());
+```
+
+prints its PID.
+
+---
+
+# 11. Checking which command the user entered
+
+Suppose the user enters:
+
+```text
+ls
+```
+
+Then:
+
+```c
+strcmp(command, "ls") == 0
+```
+
+is true.
+
+Therefore:
+
+```c
+execlp("ls", "ls", NULL);
+```
+
+executes `ls`.
+
+---
+
+### If user enters `cal`
+
+```c
+execlp("cal", "cal", NULL);
+```
+
+---
+
+### If user enters `uname`
+
+```c
+execlp("uname", "uname", NULL);
+```
+
+---
+
+### If user enters `date`
+
+```c
+execlp("date", "date", NULL);
+```
+
+---
+
+# 12. Parent section
+
+The parent is identified by:
+
+```c
+else
+```
+
+Then:
+
+```c
+wait(NULL);
+```
+
+means:
+
+> Parent waits for the child to finish.
+
+After the child finishes:
+
+```c
+printf("Parent PID: %d\n", getpid());
+```
+
+prints the parent's PID.
+
+---
+
+# 13. Example execution
+
+Suppose you run:
+
+```bash
+gcc process.c -o process
+```
+
+Then:
+
+```bash
+./process
+```
+
+You enter:
+
+```text
+Enter command (ls/cal/uname/date): ls
+```
+
+Possible output:
+
+```text
+Child PID: 5421
+file1.txt
+file2.txt
+process.c
+Parent PID: 5420
+Child process completed
+```
+
+Notice:
+
+```text
+Parent PID = 5420
+Child PID  = 5421
+```
+
+The exact numbers will be different every time.
+
+---
+
+# 14. Most important concept for your exam
+
+Memorize this structure:
+
+```c
+pid = fork();
+
+if (pid == 0) {
+    // CHILD
+
+    printf("PID = %d", getpid());
+
+    execlp(...);
+}
+else {
+    // PARENT
+
+    wait(NULL);
+
+    printf("Parent completed");
+}
+```
+
+The logic is:
+
+```text
+              fork()
+                |
+       ┌────────┴────────┐
+       ↓                 ↓
+     CHILD             PARENT
+       |                 |
+   getpid()            wait()
+       |                 |
+     exec()              |
+       |                 |
+  ls/cal/uname/date      |
+       |                 |
+       └──── finishes ───┘
+```
+
+### The four functions you absolutely need to understand
+
+| Function | Purpose |
+|---|---|
+| `fork()` | Creates child process |
+| `getpid()` | Gets current process ID |
+| `exec()` / `execlp()` | Executes another program |
+| `wait()` | Parent waits for child |
+
+**One correction to the wording of your question:** technically, `exec()` does not "create" the child process. **`fork()` creates the child; `exec()` replaces the child's program with the requested command.** This distinction is worth remembering because it is a common OS viva question.

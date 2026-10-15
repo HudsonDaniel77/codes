@@ -1,0 +1,161 @@
+
+#include <stdio.h>
+
+int page[100], frame[10];
+int n, f;
+
+// FIFO
+void FIFO() {
+    int i, j, pos = 0, faults = 0, hit;
+
+    for (i = 0; i < f; i++)
+        frame[i] = -1;
+
+    for (i = 0; i < n; i++) {
+        hit = 0;
+
+        for (j = 0; j < f; j++)
+            if (frame[j] == page[i])
+                hit = 1;
+
+        if (!hit) {
+            frame[pos] = page[i];
+            pos = (pos + 1) % f;
+            faults++;
+        }
+    }
+
+    printf("FIFO Page Faults = %d\n", faults);
+}
+
+// LRU
+void LRU() {
+    int i, j, pos, faults = 0, hit, time = 0;
+    int last[10];
+
+    for (i = 0; i < f; i++) {
+        frame[i] = -1;
+        last[i] = -1;
+    }
+
+    for (i = 0; i < n; i++) {
+        hit = 0;
+
+        for (j = 0; j < f; j++) {
+            if (frame[j] == page[i]) {
+                hit = 1;
+                last[j] = time++;
+                break;
+            }
+        }
+
+        if (!hit) {
+            pos = -1;
+
+            for (j = 0; j < f; j++)
+                if (frame[j] == -1) {
+                    pos = j;
+                    break;
+                }
+
+            if (pos == -1) {
+                pos = 0;
+                for (j = 1; j < f; j++)
+                    if (last[j] < last[pos])
+                        pos = j;
+            }
+
+            frame[pos] = page[i];
+            last[pos] = time++;
+            faults++;
+        }
+    }
+
+    printf("LRU Page Faults = %d\n", faults);
+}
+
+// Optimal
+void Optimal() {
+    int i, j, k, pos, farthest, faults = 0, hit;
+
+    for (i = 0; i < f; i++)
+        frame[i] = -1;
+
+    for (i = 0; i < n; i++) {
+        hit = 0;
+
+        for (j = 0; j < f; j++)
+            if (frame[j] == page[i])
+                hit = 1;
+
+        if (!hit) {
+            pos = -1;
+
+            for (j = 0; j < f; j++)
+                if (frame[j] == -1) {
+                    pos = j;
+                    break;
+                }
+
+            if (pos == -1) {
+                farthest = -1;
+                pos = 0;
+
+                for (j = 0; j < f; j++) {
+                    for (k = i + 1; k < n; k++)
+                        if (page[k] == frame[j])
+                            break;
+
+                    if (k == n) {
+                        pos = j;
+                        break;
+                    }
+
+                    if (k > farthest) {
+                        farthest = k;
+                        pos = j;
+                    }
+                }
+            }
+
+            frame[pos] = page[i];
+            faults++;
+        }
+    }
+
+    printf("Optimal Page Faults = %d\n", faults);
+}
+
+int main() {
+    int choice, i;
+
+    printf("Enter number of pages: ");
+    scanf("%d", &n);
+
+    printf("Enter page reference string: ");
+    for (i = 0; i < n; i++)
+        scanf("%d", &page[i]);
+
+    printf("Enter number of frames (max 10): ");
+    scanf("%d", &f);
+
+    if (n < 1 || n > 100 || f < 1 || f > 10) {
+        printf("Invalid input\n");
+        return 1;
+    }
+
+    printf("1. FIFO\n2. LRU\n3. Optimal\n");
+    printf("Enter choice: ");
+    scanf("%d", &choice);
+
+    if (choice == 1)
+        FIFO();
+    else if (choice == 2)
+        LRU();
+    else if (choice == 3)
+        Optimal();
+    else
+        printf("Invalid choice\n");
+
+    return 0;
+}

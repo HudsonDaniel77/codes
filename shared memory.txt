@@ -1,0 +1,104 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/wait.h>
+#include <string.h>
+
+struct shared_data
+{
+    char message[100];
+    int status;
+};
+
+int main()
+{
+    int shmid;
+    struct shared_data *shm;
+
+    /* Create shared memory */
+    shmid = shmget(IPC_PRIVATE,
+                   sizeof(struct shared_data),
+                   IPC_CREAT | 0666);
+
+    if (shmid == -1)
+    {
+        perror("shmget failed");
+        return 1;
+    }
+
+    /* Attach shared memory */
+    shm = (struct shared_data *)shmat(shmid, NULL, 0);
+
+    if (shm == (void *)-1)
+    {
+        perror("shmat failed");
+        return 1;
+    }
+
+    shm->status = 0;
+
+    if (fork() == 0)
+    {
+        /* ================= SERVER ================= */
+
+        printf("\n========== SERVER ==========\n");
+        printf("Server PID: %d\n", getpid());
+
+        /* Wait for client */
+        while (shm->status != 1)
+        {
+            sleep(1);
+        }
+
+        printf("Server received: %s\n", shm->message);
+
+        /* Server sends response */
+        strcpy(shm->message, "Message received successfully");
+
+        shm->status = 2;
+
+        printf("Server sent response.\n");
+
+        /* Detach */
+        shmdt(shm);
+
+        exit(0);
+    }
+    else
+    {
+        /* ================= CLIENT ================= */
+
+        printf("\n========== CLIENT ==========\n");
+        printf("Client PID: %d\n", getpid());
+
+        printf("Enter message: ");
+        scanf(" %[^\n]", shm->message);
+
+        /* Tell server data is ready */
+        shm->status = 1;
+
+        printf("Client sent: %s\n", shm->message);
+
+        /* Wait for server response */
+        while (shm->status != 2)
+        {
+            sleep(1);
+        }
+
+        printf("Client received: %s\n", shm->message);
+
+        /* Detach */
+        shmdt(shm);
+
+        wait(NULL);
+
+        /* Remove shared memory */
+        shmctl(shmid, IPC_RMID, NULL);
+
+        printf("Shared memory removed.\n");
+    }
+
+    return 0;
+}

@@ -1,0 +1,17 @@
+
+#include <stdio.h>
+#include <unistd.h>
+#include <sys/wait.h>
+
+int main() {
+    int pid = fork();
+
+    if (pid == 0) {
+        execl("./child", "child", "101", "90", NULL);
+    } else {
+        wait(NULL);
+        printf("Parent process completed\n");
+    }
+
+    return 0;
+}

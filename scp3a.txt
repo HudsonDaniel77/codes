@@ -1,0 +1,13 @@
+
+#include <stdio.h>
+#include <stdlib.h>
+
+int main(int argc, char *argv[]) {
+    int roll = atoi(argv[1]);
+    int marks = atoi(argv[2]);
+
+    printf("Roll Number: %d\n", roll);
+    printf("Marks: %d\n", marks);
+
+    return 0;
+}

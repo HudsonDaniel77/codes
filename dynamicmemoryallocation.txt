@@ -1,0 +1,90 @@
+
+#include <stdio.h>
+
+void firstFit(int block[], int process[], int b, int p) {
+    int temp[10];
+
+    for (int i = 0; i < b; i++)
+        temp[i] = block[i];
+
+    printf("\nFirst Fit:\n");
+
+    for (int i = 0; i < p; i++) {
+        int j;
+
+        for (j = 0; j < b; j++) {
+            if (temp[j] >= process[i]) {
+                printf("P%d -> B%d\n", i + 1, j + 1);
+                temp[j] -= process[i];
+                break;
+            }
+        }
+
+        if (j == b)
+            printf("P%d not allocated\n", i + 1);
+    }
+}
+
+void bestFit(int block[], int process[], int b, int p) {
+    int temp[10];
+
+    for (int i = 0; i < b; i++)
+        temp[i] = block[i];
+
+    printf("\nBest Fit:\n");
+
+    for (int i = 0; i < p; i++) {
+        int best = -1;
+
+        for (int j = 0; j < b; j++) {
+            if (temp[j] >= process[i] &&
+                (best == -1 || temp[j] < temp[best]))
+                best = j;
+        }
+
+        if (best != -1) {
+            printf("P%d -> B%d\n", i + 1, best + 1);
+            temp[best] -= process[i];
+        } else {
+            printf("P%d not allocated\n", i + 1);
+        }
+    }
+}
+
+void worstFit(int block[], int process[], int b, int p) {
+    int temp[10];
+
+    for (int i = 0; i < b; i++)
+        temp[i] = block[i];
+
+    printf("\nWorst Fit:\n");
+
+    for (int i = 0; i < p; i++) {
+        int worst = -1;
+
+        for (int j = 0; j < b; j++) {
+            if (temp[j] >= process[i] &&
+                (worst == -1 || temp[j] > temp[worst]))
+                worst = j;
+        }
+
+        if (worst != -1) {
+            printf("P%d -> B%d\n", i + 1, worst + 1);
+            temp[worst] -= process[i];
+        } else {
+            printf("P%d not allocated\n", i + 1);
+        }
+    }
+}
+
+int main() {
+    int block[] = {100, 500, 200, 300, 600};
+    int process[] = {212, 417, 112, 426};
+    int b = 5, p = 4;
+
+    firstFit(block, process, b, p);
+    bestFit(block, process, b, p);
+    worstFit(block, process, b, p);
+
+    return 0;
+}

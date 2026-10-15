@@ -1,0 +1,91 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+#include <sys/sem.h>
+#include <sys/wait.h>
+
+#define SIZE 5
+
+union semun{
+  int val;
+};
+
+struct shared_data{
+  int buffer[SIZE];
+  int in, out;
+};
+
+void wait_sem(int id, int n){
+  struct sembuf op ={n, -1, 0};
+  semop(id,&op,1);
+}
+
+void signal_sem(int id,int n){
+  struct sembuf op ={n,+1,0};
+  semop(id,&op,1);
+}
+
+int main(){
+  int shmid, semid;
+  struct shared_data *shm;
+  union semun arg;
+  
+  shmid= shmget(IPC_PRIVATE, sizeof(struct shared_data), IPC_CREAT | 0666);
+  shm= shmat(shmid, NULL, 0);
+  
+  shm->in=0;
+  shm->out=0;
+  
+  semid= semget(IPC_PRIVATE, 3, IPC_CREAT | 0666);
+  
+  arg.val=SIZE;
+  semctl(semid,0,SETVAL,arg);
+  
+  arg.val=0;
+  semctl(semid,1,SETVAL,arg);
+  
+  arg.val=1;
+  semctl(semid,2,SETVAL,arg);
+  
+  if (fork()==0){
+  sleep(10);
+    for (int i=0; i<10; i++){
+      wait_sem(semid,1);
+      wait_sem(semid,2);
+      
+      printf("Consumed: %d\n",shm->buffer[shm->out]);
+      shm->out=(shm->out+1)%SIZE;
+      
+      signal_sem(semid,2);
+      signal_sem(semid,0);
+      
+      
+    }
+    shmdt(shm);
+    exit(0);
+  }
+  else{
+    for (int i=0; i<10; i++){
+      wait_sem(semid,0);
+      wait_sem(semid,2);
+      
+      shm->buffer[shm->in]=i;
+      printf("Produced: %d\n", i);
+      shm->in=(shm->in+1)%SIZE;
+      
+      signal_sem(semid,2);
+      signal_sem(semid,1);
+      
+      //sleep(1);
+    }
+    wait(NULL);
+    shmdt(shm);
+    shmctl(shmid, IPC_RMID, NULL);
+    semctl(semid, 0, IPC_RMID);
+  }
+  return 0;
+}
+
+Explain this code without leaving anytjing
